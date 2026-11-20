@@ -1,0 +1,42 @@
+from app.models.candidate import (
+    CandidateCertification,
+    CandidateEducation,
+    CandidateExperience,
+    CandidatePreference,
+    CandidateProject,
+    CandidateSkill,
+    Resume,
+    ResumeExtraction,
+)
+from app.models.jobs import Job, JobCategory, JobLocation, JobSkill, JobSource
+from app.models.platform import (
+    Application,
+    ApplicationMessage,
+    ApplicationStatusHistory,
+    AuditLog,
+    EmailOutbox,
+    EmployerShortlist,
+    ExternalJobRecord,
+    IngestionLog,
+    Interview,
+    JobView,
+    MatchingExplanation,
+    MatchingModelVersion,
+    MatchScore,
+    Notification,
+    RecommendationHistory,
+    Report,
+    SavedJob,
+    SearchHistory,
+    Skill,
+    SourceSyncRun,
+    SystemSetting,
+)
+from app.models.users import (
+    CandidateProfile,
+    Company,
+    EmployerProfile,
+    RecruiterProfile,
+    User,
+    UserSession,
+)
