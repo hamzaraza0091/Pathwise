@@ -1,6 +1,15 @@
+
 import axios from 'axios'
 
 const TOKEN_KEY = 'pathwise_token'
+
+// Connect to the deployed FastAPI backend.
+// VITE_API_URL contains the backend domain, and /api is the API prefix.
+const BACKEND_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '')
+
+const API_BASE_URL = BACKEND_URL
+  ? `${BACKEND_URL}/api`
+  : '/api'
 
 export const tokenStore = {
   get: () => localStorage.getItem(TOKEN_KEY),
@@ -8,7 +17,9 @@ export const tokenStore = {
   clear: () => localStorage.removeItem(TOKEN_KEY),
 }
 
-const api = axios.create({ baseURL: '/api' })
+const api = axios.create({
+  baseURL: API_BASE_URL,
+})
 
 api.interceptors.request.use((config) => {
   const token = tokenStore.get()
@@ -20,34 +31,57 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const url = error.config?.url || ''
-    if (error.response?.status === 401 && tokenStore.get() && !url.startsWith('/auth/login')) {
+
+    if (
+      error.response?.status === 401 &&
+      tokenStore.get() &&
+      !url.startsWith('/auth/login')
+    ) {
       tokenStore.clear()
       window.dispatchEvent(new Event('pathwise:logout'))
     }
+
     return Promise.reject(error)
   },
 )
 
-export function errorMessage(error, fallback = 'Something went wrong. Please try again.') {
+export function errorMessage(
+  error,
+  fallback = 'Something went wrong. Please try again.',
+) {
   const data = error?.response?.data
-  if (!error?.response) return 'Cannot reach the server. Check your connection and try again.'
-  if (data?.errors?.length) return data.errors.map((e) => (e.field ? `${e.field}: ${e.message}` : e.message)).join('. ')
+
+  if (!error?.response) {
+    return 'Cannot reach the server. Check your connection and try again.'
+  }
+
+  if (data?.errors?.length) {
+    return data.errors
+      .map((e) => (e.field ? `${e.field}: ${e.message}` : e.message))
+      .join('. ')
+  }
+
   if (typeof data?.detail === 'string') return data.detail
+
   return fallback
 }
 
 export async function downloadFile(path, fallbackName = 'resume') {
   const response = await api.get(path, { responseType: 'blob' })
+
   const disposition = response.headers['content-disposition'] || ''
   const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)
+
   const name = match ? decodeURIComponent(match[1]) : fallbackName
   const url = URL.createObjectURL(response.data)
+
   const link = document.createElement('a')
   link.href = url
   link.download = name
   document.body.appendChild(link)
   link.click()
   link.remove()
+
   URL.revokeObjectURL(url)
 }
 
